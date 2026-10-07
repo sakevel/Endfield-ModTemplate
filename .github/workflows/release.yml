@@ -58,23 +58,19 @@ jobs:
           sec = ini['mod']
 
           mod_id = sec.get('id', 'sample-mod')
-          mod_name = sec.get('name', '永动接线器')
+          mod_name = sec.get('name', '示例模组')
           mod_ver = sec.get('version', '0.1.0')
           mod_desc = sec.get('description', '')
-          mod_authors = sec.get('authors', 'sakevel')
+          mod_authors = sec.get('authors', '永动接线器')
           mod_tags = [t.strip() for t in sec.get('tags', '').split(',') if t.strip()]
           mod_depends = [d.strip() for d in sec.get('depends', '').split(',') if d.strip()]
-
-          icon_b64 = ''
-          if os.path.exists('mod/icon.png'):
-              with open('mod/icon.png', 'rb') as f:
-                  icon_b64 = 'data:image/png;base64,' + base64.b64encode(f.read()).decode('ascii')
 
           zip_name = os.environ['ZIP_NAME']
           sha256 = os.environ['ZIP_SHA']
           repo = os.environ['GITHUB_REPOSITORY']
           ref = os.environ['GITHUB_REF_NAME']
           asset_url = f'https://github.com/{repo}/releases/download/{ref}/{zip_name}'
+          icon_url = f'https://raw.githubusercontent.com/{repo}/main/mod/icon.png' if os.path.exists('mod/icon.png') else ''
 
           index_path = 'mod-index/index.json'
           with open(index_path, 'r', encoding='utf-8') as f:
@@ -91,7 +87,7 @@ jobs:
               'asset_url': asset_url,
               'sha256': sha256,
               'depends': mod_depends,
-              'icon': icon_b64
+              'icon': icon_url
           }
 
           mods = index_data.get('mods', [])
