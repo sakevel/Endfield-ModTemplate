@@ -1,0 +1,10 @@
+{
+  "id": "sample-mod",
+  "files": [
+    "SampleMod.dll",
+    "mod.ini",
+    "config.ini",
+    "icon.png",
+    "sample-mod.lua"
+  ]
+}
