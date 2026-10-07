@@ -33,11 +33,11 @@ jobs:
           echo "ZIP_NAME=$(Split-Path $zip -Leaf)" >> $env:GITHUB_ENV
           echo "ZIP_SHA=$sha" >> $env:GITHUB_ENV
 
-      - name: Upload Release Asset
+      - name: Create or Upload Release Asset
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ github.ref_name }} "$env:ZIP_PATH" "$env:ZIP_PATH.sha256" --clobber
+          gh release create ${{ github.ref_name }} "$env:ZIP_PATH" "$env:ZIP_PATH.sha256" --title "${{ github.ref_name }}" --generate-notes
 
       - name: Checkout Mod Index Repository
         uses: actions/checkout@v4
@@ -51,7 +51,7 @@ jobs:
           GH_TOKEN: ${{ secrets.INDEX_ACCESS_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           python -c @"
-          import json, os, configparser, base64
+          import json, os, configparser
 
           ini = configparser.ConfigParser()
           ini.read('mod/mod.ini', encoding='utf-8')
@@ -106,14 +106,17 @@ jobs:
           with open(index_path, 'w', encoding='utf-8') as f:
               json.dump(index_data, f, ensure_ascii=False, indent=2)
           print(f'Updated index for {mod_id} v{mod_ver}')
+
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as ge:
+              ge.write(f'MOD_ID={mod_id}\n')
           "@
 
           cd mod-index
           git config user.name "sakevel"
           git config user.email "223179818+sakevel@users.noreply.github.com"
-          $branch = "update-$($env:GITHUB_REF_NAME)-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+          $branch = "update-$($env:MOD_ID)-$($env:GITHUB_REF_NAME)-$([guid]::NewGuid().ToString('N').Substring(0,8))"
           git checkout -b $branch
           git add index.json
-          git commit -m "chore(index): update mod $($sec.id) to $($env:GITHUB_REF_NAME)"
+          git commit -m "chore(index): update mod $($env:MOD_ID) to $($env:GITHUB_REF_NAME)"
           git push origin $branch
-          gh pr create --title "chore(index): update mod $($sec.id) to $($env:GITHUB_REF_NAME)" --body "Automated release publish from $($env:GITHUB_REPOSITORY)." --base main --head $branch
+          gh pr create --title "chore(index): update mod $($env:MOD_ID) to $($env:GITHUB_REF_NAME)" --body "Automated release publish from $($env:GITHUB_REPOSITORY)." --base main --head $branch
